@@ -29,6 +29,7 @@ def build_gene_model(df):
                 position_footprint.setdefault(p,[]).append(transcript_id)
                 # put into position_ense
                 position_ense.setdefault(p,[]).append(ense)
+    position_ense = {p:list(set(ense_lis)) for p,ense_lis in position_ense.items()}
     # phase2: moving along the footprint
     if strand == '+':
         string_stream = ''
