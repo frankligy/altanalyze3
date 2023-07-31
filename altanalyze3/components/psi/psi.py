@@ -1,8 +1,11 @@
+#!/data/salomonis2/LabFiles/Frank-Li/refactor/neo_env/bin/python3.7
+
 import os
 import sys
 import pandas as pd
 import numpy as np
 from copy import deepcopy
+import argparse
 
 
 def find_uid_in_clique(the_uid,region,strand,uid2coords):
@@ -41,7 +44,7 @@ def calculate_psi_core(clique,uid,count,sample_columns):
     else:  # no background event
         bg_uid = 'None'      
         cond = False
-    return psi,bg_uid,cond
+    return psi,bg_uid,cond,sub_count.iloc[1:,:].to_dict()
         
 
 
@@ -58,11 +61,11 @@ def calculate_psi_per_gene(count,outdir):
         for c in ['gene','chrom','start','end','strand']:
             index_list.remove(c)
         sample_columns = index_list
-        psi_values,bg_uid, cond = calculate_psi_core(clique,uid,count,sample_columns)
-        data = (uid,bg_uid,cond,*psi_values)
+        psi_values,bg_uid, cond, dic = calculate_psi_core(clique,uid,count,sample_columns)
+        data = (uid,bg_uid,cond,dic,*psi_values)
         return_data.append(data)
-    df = pd.DataFrame.from_records(data=return_data,columns=['uid','bg_uid','cond']+sample_columns)
-    df.to_csv(os.path.join(outdir,'output_psi.txt'),sep='\t')
+    df = pd.DataFrame.from_records(data=return_data,columns=['uid','bg_uid','cond','dic']+sample_columns)
+    df.to_csv(os.path.join(outdir,'output_psi.txt'),sep='\t',index=None)
 
         
 
@@ -70,7 +73,7 @@ def calculate_psi_per_gene(count,outdir):
         
 def main(args):
     junction_path = args.junction
-    gene = args.gene
+    query_gene = args.gene
     outdir = args.outdir
     
     count = pd.read_csv(junction_path,sep='\t',index_col=0)
@@ -94,8 +97,7 @@ def main(args):
         col_strand.append(strand)
     for name,col in zip(['uid','gene','chrom','start','end','strand'],[col_uid,col_gene,col_chrom,col_start,col_end,col_strand]):
         count[name] = col
-
-    test_count = count.loc[count['gene']==gene,:]
+    test_count = count.loc[count['gene']==query_gene,:]
     calculate_psi_per_gene(test_count,outdir)
 
 if __name__ == '__main__':
